@@ -1,0 +1,38 @@
+name: CI/CD Pipeline to EC2
+
+on:
+  push:
+    branches:
+      - main   # Trigger when you push to main branch
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v3
+
+      - name: 🚀 Deploy to EC2 via SSH
+        uses: appleboy/ssh-action@v0.1.10
+        with:
+          host: ${{ secrets.EC2_HOST }}        # EC2 Public IP
+          username: ${{ secrets.EC2_USER }}    # ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}      # .pem private key
+          script: |
+            echo "Connected to EC2"
+
+            # Create app directory if not exists
+            mkdir -p /var/www/app
+            cd /var/www/app
+
+            # Remove old files
+            rm -rf *
+
+            # Clone latest code
+            git clone https://github.com/${{ github.repository }} .
+
+            # Restart nginx
+            sudo systemctl restart nginx
+
+            echo "Deployment completed!"
